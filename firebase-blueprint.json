@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "lastFolderId": { "type": "string", "description": "Last accessed Google Drive folder ID" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "A user-created music playlist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "coverUrl": { "type": "string", "description": "URL for playlist cover image" },
+        "songIds": { "type": "array", "description": "List of Google Drive file IDs" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name"]
+    },
+    "TrackMetadata": {
+      "title": "Track Metadata",
+      "description": "Additional metadata for a specific track (by Drive file ID)",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "songId": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["userId", "songId", "coverUrl"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "A liked track record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "songId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "songId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Store individual user profiles"
+    },
+    "playlists/{playlistId}": {
+      "schema": "Playlist",
+      "description": "Store music playlists"
+    },
+    "likes/{likeId}": {
+      "schema": "Like",
+      "description": "Store user liked songs"
+    },
+    "trackMetadata/{songId}": {
+      "schema": "TrackMetadata",
+      "description": "Store custom metadata like cover art for specific tracks"
+    }
+  }
+}

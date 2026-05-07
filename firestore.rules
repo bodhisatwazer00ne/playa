@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && 
+        incoming().keys().hasAll(['uid', 'email']) &&
+        incoming().uid == request.auth.uid;
+    }
+
+    // Playlists
+    match /playlists/{playlistId} {
+      function isValidPlaylist(data) {
+        return data.userId == request.auth.uid &&
+               data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+               data.songIds is list && data.songIds.size() <= 1000 &&
+               (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 1000000));
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      
+      allow create: if isSignedIn() && isValidPlaylist(incoming());
+      
+      allow update: if isSignedIn() && isOwner(existing().userId) && isValidPlaylist(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'songIds', 'coverUrl', 'updatedAt']);
+      
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    match /likes/{likeId} {
+      function isValidLike(data) {
+        return data.userId == request.auth.uid &&
+               data.songId is string && data.songId.size() > 0 && data.songId.size() <= 128;
+      }
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidLike(incoming()) && isValidId(likeId);
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    match /trackMetadata/{songId} {
+      function isValidMetadata(data) {
+        return data.userId == request.auth.uid &&
+               data.songId == songId &&
+               data.coverUrl is string && data.coverUrl.size() <= 1000000 &&
+               data.updatedAt is number;
+      }
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update: if isSignedIn() && isValidMetadata(incoming());
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+  }
+}

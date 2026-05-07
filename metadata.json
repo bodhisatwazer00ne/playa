@@ -1,0 +1,6 @@
+{
+  "name": "Playa",
+  "description": "A mobile-optimized music player that streams audio directly from your Google Drive folders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
