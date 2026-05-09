@@ -3,13 +3,43 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Readable } from 'stream';
+import rateLimit from 'express-rate-limit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// General rate limiter for all API routes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+// Stricter limiter for sensitive routes (auth, streaming)
+// User requested: max 5 attempts on auth routes per 15 minutes
+const sensitiveLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Security limit reached. Please wait 15 minutes before retrying.' }
+});
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Security: Sanitize inputs and reject oversized payloads
+  app.use(express.json({ limit: '10kb' })); // Reject JSON > 10kb
+  app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+  // Apply general limiter to all /api routes
+  app.use('/api/', apiLimiter);
+
+  // Apply strict limiter to streaming (and any future auth routes)
+  app.use('/api/stream', sensitiveLimiter);
 
   // API Proxy for Google Drive Streaming
   app.get('/api/stream/:fileId', async (req, res) => {

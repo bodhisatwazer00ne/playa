@@ -29,10 +29,18 @@ service cloud.firestore {
 
     // User profiles
     match /users/{userId} {
+      function isValidUser(data) {
+        return data.uid == userId &&
+               data.email is string && data.email.size() < 256;
+      }
       allow get: if isOwner(userId);
-      allow create, update: if isOwner(userId) && 
+      allow create: if isOwner(userId) && 
+        isValidUser(incoming()) &&
         incoming().keys().hasAll(['uid', 'email']) &&
-        incoming().uid == request.auth.uid;
+        incoming().keys().size() == 2;
+      allow update: if isOwner(userId) &&
+        isValidUser(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email']);
     }
 
     // Playlists
@@ -41,15 +49,18 @@ service cloud.firestore {
         return data.userId == request.auth.uid &&
                data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
                data.songIds is list && data.songIds.size() <= 1000 &&
-               (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 1000000));
+               (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 1000000)) &&
+               data.updatedAt == request.time;
       }
 
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
       
-      allow create: if isSignedIn() && isValidPlaylist(incoming());
+      allow create: if isSignedIn() && isValidPlaylist(incoming()) && 
+        incoming().createdAt == request.time;
       
       allow update: if isSignedIn() && isOwner(existing().userId) && isValidPlaylist(incoming()) &&
+        incoming().userId == existing().userId &&
         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'songIds', 'coverUrl', 'updatedAt']);
       
       allow delete: if isSignedIn() && isOwner(existing().userId);
@@ -70,11 +81,14 @@ service cloud.firestore {
         return data.userId == request.auth.uid &&
                data.songId == songId &&
                data.coverUrl is string && data.coverUrl.size() <= 1000000 &&
-               data.updatedAt is number;
+               data.updatedAt == request.time;
       }
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create, update: if isSignedIn() && isValidMetadata(incoming());
+      allow create: if isSignedIn() && isValidMetadata(incoming());
+      allow update: if isSignedIn() && isOwner(existing().userId) && isValidMetadata(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['coverUrl', 'updatedAt']);
       allow delete: if isSignedIn() && isOwner(existing().userId);
     }
   }
