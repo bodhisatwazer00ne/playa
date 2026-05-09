@@ -23,10 +23,18 @@ const firebaseConfig = {
   firestoreDatabaseId: getEnv('VITE_FIREBASE_DATABASE_ID'),
 };
 
-console.log("[Firebase] Initializing for project:", firebaseConfig.projectId);
+// Diagnostics for production/deployments
+if (typeof window !== 'undefined') {
+  console.log("[Firebase] Target Project:", firebaseConfig.projectId);
+  
+  if (firebaseConfig.authDomain && firebaseConfig.authDomain.includes('onrender.com')) {
+    console.error("[Firebase] ⚠️ POTENTIAL MISCONFIGURATION: authDomain should be your Firebase domain (e.g. project-id.firebaseapp.com), NOT your Render domain (onrender.com).");
+  }
 
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
-  console.error("[Firebase] 🚨 CRITICAL CONFIG ERROR: API Key or Auth Domain is missing from environment variables.");
+  if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+    console.warn("[Firebase] 🚨 MISSING CONFIG: API Key or Auth Domain is unset. Authentication will fail.");
+    console.info("[Firebase] Detected VITE_ keys:", Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+  }
 }
 
 const app = initializeApp(firebaseConfig);
