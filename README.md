@@ -4,32 +4,32 @@ Playa is a high-performance, cloud-native music and video player that turns your
 
 ---
 
-## Key Features
+## 🌟 Key Features
 
-### Cloud-Native Streaming
+### ☁️ Cloud-Native Streaming
 Directly connect to your **Google Drive** library. No uploading, no syncing—just instant access to your entire media collection. Playa intelligently scans your folders and organizes your music for you.
 
-### High-Fidelity Audio & Video
+### 🔊 High-Fidelity Audio & Video
 Supports a wide range of formats, including **MP3, AAC, FLAC, WAV, OGG, and MP4**. Whether you're an audiophile or just want to watch a quick clip, Playa handles it all with a high-performance streaming proxy.
 
-### Smart Folder Scanning
+### 📂 Smart Folder Scanning
 Tired of manually adding files? Use the **Scan All Music** feature to deep-crawl your chosen folders and automatically build a temporary library of all playable media.
 
-### Collections (Playlists)
+### 📚 Collections (Playlists)
 Create persistent **Collections** to group your favorite tracks. All your playlists are saved securely in the cloud via Firebase, so they transition with you across devices.
 
-### The Vault
+### 🔒 The Vault
 A dedicated space for your most-loved tracks. Simply "Like" a song to add it to your Vault for quick, one-tap listening.
 
-### Custom Art & Metadata
+### 🎨 Custom Art & Metadata
 Personalize your library by uploading **custom cover art** for any track. Playa remembers your preferences and keeps your library looking sharp.
 
-### Polished Interface
+### ⚡ Polished Interface
 Experience a minimalist, glassmorphic UI powered by **Tailwind CSS** and **Motion**. Smooth transitions, responsive design, and intuitive controls make navigation a breeze.
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 - **Frontend**: React 19, TypeScript
 - **Styling**: Tailwind CSS 4.0
@@ -41,7 +41,7 @@ Experience a minimalist, glassmorphic UI powered by **Tailwind CSS** and **Motio
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -88,5 +88,16 @@ Playa is designed to be easily deployed on **Render**.
 
 ---
 
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests to help make Playa the best cloud player for everyone.
+
+---
+
+## 📝 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
 
 *Enjoy your music, anywhere.*

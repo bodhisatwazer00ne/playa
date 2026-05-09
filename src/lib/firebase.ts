@@ -3,18 +3,30 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Load from environment variables (best for production/GitHub)
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID,
+// Helper to get env variables with fallback support
+const getEnv = (key: string) => {
+  const rawVal = import.meta.env[key] || (typeof process !== 'undefined' ? process.env[key] : undefined);
+  if (typeof rawVal === 'string') {
+    // Clean up potential quotes or whitespace from copy-pasting
+    return rawVal.trim().replace(/^["']|["']$/g, '');
+  }
+  return rawVal;
 };
 
-if (!firebaseConfig.apiKey) {
-  console.error("Firebase API Key is missing! Make sure to set VITE_FIREBASE_API_KEY in your environment variables.");
+const firebaseConfig = {
+  apiKey: getEnv('VITE_FIREBASE_API_KEY'),
+  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnv('VITE_FIREBASE_APP_ID'),
+  firestoreDatabaseId: getEnv('VITE_FIREBASE_DATABASE_ID'),
+};
+
+console.log("[Firebase] Initializing for project:", firebaseConfig.projectId);
+
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+  console.error("[Firebase] 🚨 CRITICAL CONFIG ERROR: API Key or Auth Domain is missing from environment variables.");
 }
 
 const app = initializeApp(firebaseConfig);
