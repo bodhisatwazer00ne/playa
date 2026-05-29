@@ -9,7 +9,7 @@ interface MusicPlayerProps {
   currentFile: DriveFile | null;
   isPlaying: boolean;
   onTogglePlay: () => void;
-  onNext: () => void;
+  onNext: (isAutomatic?: boolean) => void;
   onPrev: () => void;
   accessToken: string | null;
   queue: DriveFile[];
@@ -183,14 +183,8 @@ export function MusicPlayer({
             currentSrc: audio.currentSrc
           });
         }}
-        onEnded={repeatMode === 'one' ? () => { 
-          if (audioRef.current) {
-            audioRef.current.currentTime = 0; 
-            audioRef.current.play().catch(err => {
-              if (err.name !== 'AbortError') console.error(err);
-            });
-          }
-        } : onNext}
+        onEnded={() => onNext(true)}
+        loop={repeatMode === 'one'}
         crossOrigin="anonymous"
         preload="auto"
       />

@@ -455,14 +455,23 @@ export default function App() {
     setIsPlayerExpanded(true);
   };
 
-  const handleNext = () => {
-    const { queue, queueIndex, shuffle } = playerState;
+  const handleNext = (isAutomatic = false) => {
+    const { queue, queueIndex, shuffle, repeatMode } = playerState;
     if (queue.length === 0) return;
     
     let nextIndex = queueIndex + 1;
     
     if (nextIndex >= queue.length) {
       // Reached the end of the collection
+      if (repeatMode === 'off' && isAutomatic) {
+        setPlayerState(prev => ({
+          ...prev,
+          isPlaying: false,
+          currentTime: 0
+        }));
+        return;
+      }
+      
       if (shuffle) {
         // Reshuffle the entire collection for the next pass to keep it fresh
         const shuffledQueue = [...queue].sort(() => Math.random() - 0.5);
