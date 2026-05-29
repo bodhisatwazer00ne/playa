@@ -2,5 +2,5 @@
   "name": "PLAYA",
   "description": "A mobile-optimized music player that streams audio directly from your Google Drive folders.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
