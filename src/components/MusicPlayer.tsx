@@ -165,7 +165,7 @@ export function MusicPlayer({
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
-      isExpanded ? "h-full bg-white" : "h-20 bg-white/90 backdrop-blur-xl border-t border-slate-100"
+      isExpanded ? "h-full bg-white pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]" : "h-[calc(5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/90 backdrop-blur-xl border-t border-slate-100"
     )}>
       <audio
         ref={audioRef}
@@ -250,8 +250,8 @@ export function MusicPlayer({
               exit={{ opacity: 0 }}
               className="flex flex-col h-full max-w-xl mx-auto w-full relative"
             >
-              <div className="absolute inset-0 pb-12 pt-8 px-8 flex flex-col no-scrollbar">
-                <header className="flex items-center justify-between mb-8 shrink-0">
+              <div className="absolute inset-0 pb-8 pt-6 sm:pb-12 sm:pt-8 px-6 sm:px-8 flex flex-col no-scrollbar justify-between">
+                <header className="flex items-center justify-between mb-4 sm:mb-8 shrink-0">
                   <button 
                     onClick={() => onToggleExpand(false)}
                     className="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all"
@@ -330,8 +330,8 @@ export function MusicPlayer({
                   </div>
                 </header>
 
-                <div className="flex-1 flex flex-col items-center justify-start gap-12 pt-4">
-                  <div className="w-full aspect-square max-w-[380px] rounded-[3.5rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden relative group shrink-0">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-8 pt-2 overflow-y-auto no-scrollbar">
+                  <div className="w-48 h-48 sm:w-80 sm:h-80 rounded-[2.5rem] sm:rounded-[3.5rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden relative group shrink-0">
                     {currentCover ? (
                       <img 
                         src={currentCover.replace('=s220', '=s800')} 
@@ -340,23 +340,23 @@ export function MusicPlayer({
                         referrerPolicy="no-referrer" 
                       />
                     ) : (
-                      <Music className="w-24 h-24 text-slate-100" />
+                      <Music className="w-16 h-16 sm:w-24 sm:h-24 text-slate-100" />
                     )}
                   </div>
                   
-                  <div className="w-full text-center space-y-2 relative">
-                    <h2 className="text-4xl font-display text-slate-900 leading-tight capitalize max-w-[90%] mx-auto">{currentFile.name.replace(/\.[^/.]+$/, "")}</h2>
-                    <p className="text-slate-300 font-bold uppercase tracking-[0.2em] text-[10px]">Cloud Media Port</p>
+                  <div className="w-full text-center space-y-1 relative shrink-0">
+                    <h2 className="text-xl sm:text-3xl font-display text-slate-900 leading-tight capitalize max-w-[90%] mx-auto font-bold truncate">{currentFile.name.replace(/\.[^/.]+$/, "")}</h2>
+                    <p className="text-slate-300 font-bold uppercase tracking-[0.2em] text-[8px] sm:text-[10px]">Cloud Media Port</p>
                   </div>
 
-                  <div className="w-full space-y-10 mt-4">
+                  <div className="w-full space-y-4 sm:space-y-8 mt-2 sm:mt-4 shrink-0">
                     {/* Controls Row */}
-                    <div className="flex items-center justify-center gap-4 w-full">
+                    <div className="flex items-center justify-center gap-3 sm:gap-4 w-full">
                       <button 
                         onClick={() => seekRelative(-10)}
                         className="text-slate-400 hover:text-slate-900 transition-colors p-2"
                       >
-                        <RotateCcw size={22} />
+                        <RotateCcw size={18} className="sm:size-[22px]" />
                       </button>
 
                       <button 
@@ -366,28 +366,28 @@ export function MusicPlayer({
                           shuffle ? "text-accent bg-accent/5" : "text-slate-400 hover:text-slate-600"
                         )}
                       >
-                        <Shuffle size={20} />
+                        <Shuffle size={18} className="sm:size-[20px]" />
                       </button>
 
                       <button 
                         onClick={onPrev} 
                         className="text-slate-600 hover:text-slate-900 transition-all p-2"
                       >
-                        <SkipBack size={28} fill="currentColor" fillOpacity={0.1} />
+                        <SkipBack size={24} className="sm:size-[28px]" fill="currentColor" fillOpacity={0.1} />
                       </button>
 
                       <button 
                         onClick={onTogglePlay}
-                        className="w-20 h-20 flex items-center justify-center bg-slate-900 text-white rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl"
+                        className="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center bg-slate-900 text-white rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl shrink-0"
                       >
-                        {isPlaying ? <Pause size={36} fill="currentColor" /> : <Play size={36} className="ml-1.5" fill="currentColor" />}
+                        {isPlaying ? <Pause size={24} className="sm:size-[36px]" fill="currentColor" /> : <Play size={24} className="sm:size-[36px] ml-1" fill="currentColor" />}
                       </button>
 
                       <button 
                         onClick={onNext} 
                         className="text-slate-600 hover:text-slate-900 transition-all p-2"
                       >
-                        <SkipForward size={28} fill="currentColor" fillOpacity={0.1} />
+                        <SkipForward size={24} className="sm:size-[28px]" fill="currentColor" fillOpacity={0.1} />
                       </button>
 
                       <button 
@@ -397,19 +397,19 @@ export function MusicPlayer({
                           repeatMode !== 'off' ? "text-accent bg-accent/5" : "text-slate-400 hover:text-slate-600"
                         )}
                       >
-                        {repeatMode === 'one' ? <Repeat1 size={20} /> : <Repeat size={20} />}
+                        {repeatMode === 'one' ? <Repeat1 size={18} className="sm:size-[20px]" /> : <Repeat size={18} className="sm:size-[20px]" />}
                       </button>
 
                       <button 
                         onClick={() => seekRelative(10)}
                         className="text-slate-400 hover:text-slate-900 transition-colors p-2"
                       >
-                        <RotateCw size={22} />
+                        <RotateCw size={18} className="sm:size-[22px]" />
                       </button>
                     </div>
 
                     {/* Progress Slider */}
-                    <div className="w-full space-y-3">
+                    <div className="w-full space-y-2">
                       <div className="relative group/seeker px-2">
                         <input 
                           type="range"
@@ -421,16 +421,16 @@ export function MusicPlayer({
                           className="w-full h-1 bg-slate-100 rounded-full appearance-none cursor-pointer accent-slate-900"
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest px-3">
+                      <div className="flex justify-between text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest px-3">
                         <span>{formatTime(Math.floor(currentTime))}</span>
                         <span>{formatTime(Math.floor(duration))}</span>
                       </div>
                     </div>
 
                     {/* Volume Slider - Smaller and Below */}
-                    <div className="w-full flex items-center justify-center gap-4 px-12">
-                      <Volume2 size={14} className="text-slate-400" />
-                      <div className="flex-1 max-w-[200px]">
+                    <div className="w-full flex items-center justify-center gap-3 sm:gap-4 px-6 sm:px-12">
+                      <Volume2 size={12} className="text-slate-400 sm:size-[14px]" />
+                      <div className="flex-1 max-w-[150px] sm:max-w-[200px]">
                         <input 
                           type="range"
                           min="0"
@@ -444,11 +444,11 @@ export function MusicPlayer({
                       <button 
                         onClick={onToggleLike}
                         className={cn(
-                          "transition-all ml-4",
+                          "transition-all ml-2 sm:ml-4",
                           isLiked ? "text-red-500 scale-110" : "text-slate-300 hover:text-slate-500"
                         )}
                       >
-                        <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
+                        <Heart size={18} className="sm:size-[20px]" fill={isLiked ? "currentColor" : "none"} />
                       </button>
                     </div>
                   </div>

@@ -604,7 +604,7 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-slate-50 relative overflow-hidden">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center p-8 bg-slate-50 relative overflow-hidden">
         {/* Dynamic Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
           <motion.div 
@@ -683,7 +683,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white text-slate-900 select-none">
+    <div className="h-[100dvh] flex flex-col bg-white text-slate-900 select-none">
       <header className="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
@@ -1186,7 +1186,7 @@ export default function App() {
       </AnimatePresence>
 
       <nav className={cn(
-        "fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center bg-white/90 backdrop-blur-xl border border-slate-100 rounded-[2.2rem] px-8 py-3.5 shadow-2xl gap-8 sm:gap-11 z-40 max-w-[90vw] transition-all duration-300",
+        "fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 flex items-center bg-white/90 backdrop-blur-xl border border-slate-100 rounded-[2.2rem] px-8 py-3.5 shadow-2xl gap-8 sm:gap-11 z-40 max-w-[95vw] transition-all duration-300",
         isPlayerExpanded ? "opacity-0 pointer-events-none translate-y-10" : "opacity-100"
       )}>
         <button 

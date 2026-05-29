@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="140" fill="url(#bg)"/>
+  
+  <!-- Subtle inner shadow/border -->
+  <rect x="12" y="12" width="488" height="488" rx="128" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.1"/>
+  
+  <g transform="translate(256, 256)">
+    <!-- Vinyl record body -->
+    <circle r="180" fill="#090d16" stroke="#1e293b" stroke-width="8"/>
+    
+    <!-- Vinyl grooving circles -->
+    <circle r="150" fill="none" stroke="#111827" stroke-width="2" stroke-dasharray="10, 4"/>
+    <circle r="130" fill="none" stroke="#111827" stroke-width="1"/>
+    <circle r="110" fill="none" stroke="#111827" stroke-width="2" stroke-dasharray="15, 6"/>
+    <circle r="90" fill="none" stroke="#111827" stroke-width="1"/>
+    
+    <!-- Center label -->
+    <circle r="60" fill="#f8fafc"/>
+    <circle r="50" fill="url(#bg)"/>
+    
+    <!-- Center spindle hole -->
+    <circle r="15" fill="#f8fafc"/>
+    <circle r="10" fill="#0f172a"/>
+    
+    <!-- Stylized Play emblem/soundwave -->
+    <path d="M -15,-25 L 25,0 L -15,25 Z" fill="#ffffff" transform="scale(0.8) translate(5, 0)"/>
+  </g>
+  
+  <!-- Glossy overlay reflection -->
+  <path d="M 12,12 Q 256,400 488,12 Q 256,120 12,12 Z" fill="url(#accent)"/>
+</svg>
