@@ -3,8 +3,8 @@ import { DriveFile } from '../types';
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 
 export async function listFiles(accessToken: string, folderId: string = 'root'): Promise<DriveFile[]> {
-  const q = `'${folderId}' in parents and (mimeType contains 'audio/' or mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and trashed = false`;
-  const url = `${DRIVE_API_BASE}/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink)&orderBy=folder,name`;
+  const q = `'${folderId}' in parents and trashed = false`;
+  const url = `${DRIVE_API_BASE}/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink)&orderBy=folder,name&pageSize=1000`;
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -16,7 +16,15 @@ export async function listFiles(accessToken: string, folderId: string = 'root'):
   }
 
   const data = await response.json();
-  return data.files;
+  const rawFiles = data.files || [];
+  
+  // Clean client-side filter to only return folders and audio/video media files
+  return rawFiles.filter((f: any) => 
+    f.mimeType === 'application/vnd.google-apps.folder' ||
+    f.mimeType.startsWith('audio/') ||
+    f.mimeType.startsWith('video/') ||
+    /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(f.name)
+  );
 }
 
 export async function getFileMetadata(accessToken: string, fileId: string): Promise<DriveFile> {

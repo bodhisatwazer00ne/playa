@@ -167,9 +167,9 @@ export default function App() {
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      // 2. Search Google Drive for tracks and folders
-      const q = `name contains '${searchQuery.replace(/'/g, "\\'")}' and trashed = false and (mimeType contains 'audio/' or mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink)&pageSize=50`;
+      // 2. Search Google Drive for tracks and folders safely using client-side matching
+      const q = `name contains '${searchQuery.replace(/'/g, "\\'")}' and trashed = false`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink)&pageSize=200`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
       
       if (!res.ok) {
@@ -180,7 +180,11 @@ export default function App() {
       const data = await res.json();
       
       const driveFiles = data.files || [];
-      const tracks = driveFiles.filter((f: any) => f.mimeType.startsWith('audio/') || f.mimeType.startsWith('video/'));
+      const tracks = driveFiles.filter((f: any) => 
+        f.mimeType.startsWith('audio/') || 
+        f.mimeType.startsWith('video/') || 
+        /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(f.name)
+      );
       const folders = driveFiles.filter((f: any) => f.mimeType === 'application/vnd.google-apps.folder');
 
       setSearchResults({
@@ -264,14 +268,20 @@ export default function App() {
     setIsShowAllMode(true);
     setActiveTab('browse');
     try {
-      // Use the most reliable way to find media files by MIME type (broadened search)
-      let q = "(mimeType contains 'audio' or mimeType contains 'video' or mimeType = 'application/ogg') and trashed = false";
+      // Define a comprehensive list of standard audio/video MIME types since 'mimeType contains' is not supported by Drive API v3
+      const mediaMimes = [
+        "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/aac", "audio/flac", "audio/x-flac", "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/webm", "audio/3gpp",
+        "video/mp4", "video/webm", "video/quicktime", "video/x-matroska", "video/x-msvideo", "video/mpeg", "application/ogg", "application/x-ogg"
+      ];
+      const mimeTypeConditions = mediaMimes.map(type => `mimeType = '${type}'`).join(' or ');
+      
+      let q = `(${mimeTypeConditions}) and trashed = false`;
       
       // If specific folders are provided, restrict the search to those folders
       if (folderIds && folderIds.length > 0) {
         // Enforce the grouping with internal and external parentheses
         const parentConditions = folderIds.map(id => `'${id}' in parents`).join(' or ');
-        q = `(${parentConditions}) and (mimeType contains 'audio' or mimeType contains 'video' or mimeType = 'application/ogg') and trashed = false`;
+        q = `(${parentConditions}) and (${mimeTypeConditions}) and trashed = false`;
       }
 
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink,webContentLink)&pageSize=1000`;
@@ -292,6 +302,7 @@ export default function App() {
       for (const f of rawFiles) {
         const isMedia = f.mimeType.startsWith('audio/') || 
                        f.mimeType.startsWith('video/') ||
+                       f.mimeType === 'application/ogg' ||
                        /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(f.name);
          
         if (isMedia && !seenIds.has(f.id)) {

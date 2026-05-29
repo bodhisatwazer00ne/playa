@@ -42,6 +42,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig?.firestoreDatabaseId);
 
 export const googleProvider = new GoogleAuthProvider();
+// Force Google to prompt the user to select their account
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 // Add Drive scopes
 googleProvider.addScope('https://www.googleapis.com/auth/drive.readonly');
 googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
