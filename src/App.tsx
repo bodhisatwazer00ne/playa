@@ -189,10 +189,17 @@ export default function App() {
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (!u) {
+      if (u) {
+        const storedToken = localStorage.getItem('google_access_token');
+        if (storedToken) {
+          setAccessToken(storedToken);
+          fetchFolder(storedToken, 'root');
+        }
+      } else {
         setAccessToken(null);
         setFiles([]);
         setPlaylists([]);
+        localStorage.removeItem('google_access_token');
       }
     });
   }, []);
@@ -219,6 +226,7 @@ export default function App() {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         setAccessToken(credential.accessToken);
+        localStorage.setItem('google_access_token', credential.accessToken);
         handleTabChange('home');
         fetchFolder(credential.accessToken, 'root');
       }
@@ -598,79 +606,99 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden flex flex-col pb-24">
-        <AnimatePresence mode="wait">
-          {activeTab === 'home' && (
-            <motion.div 
-              key="home"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex-1 overflow-y-auto"
+      <main className="flex-1 overflow-hidden flex flex-col pb-24 border-t border-slate-50">
+        {!accessToken ? (
+          <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-8 text-center space-y-8 animate-fade-in">
+            <div className="relative w-24 h-24 bg-slate-50 border border-slate-100 rounded-[2rem] flex items-center justify-center shadow-sm">
+              <FolderOpen size={36} className="text-slate-400" />
+            </div>
+            <div className="space-y-3 max-w-sm">
+              <h3 className="text-xl font-bold text-slate-900 tracking-tight">Authorization Required</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Your Google Drive access token is inactive or has expired. Please authorize Playa to access your cloud audio and video files.
+              </p>
+            </div>
+            <button 
+              onClick={handleSignIn}
+              disabled={isSigningIn}
+              className="px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <div className="max-w-xl mx-auto px-6 py-12 space-y-12">
-                <div className="space-y-4 text-center">
-                  <h2 className="text-5xl font-display text-slate-900 uppercase tracking-tight">Overview</h2>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <button 
-                    onClick={() => setActiveTab('browse')}
-                    className="group flex items-center gap-6 p-8 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50"
-                  >
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-slate-900 transition-colors">
-                      <FolderOpen size={28} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-xl font-bold text-slate-900">Cloud Drive</h3>
-                      <p className="text-xs text-slate-400 uppercase tracking-widest font-medium">Browse Files</p>
-                    </div>
-                  </button>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <button 
-                      onClick={() => setActiveTab('vault')}
-                      className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-left"
-                    >
-                      <Heart size={24} className="text-slate-200 group-hover:text-red-500 transition-colors mb-4" />
-                      <h3 className="font-bold text-slate-900">Vault</h3>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">Liked Songs</p>
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('playlists')}
-                      className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-left"
-                    >
-                      <PlaySquare size={24} className="text-slate-200 group-hover:text-accent transition-colors mb-4" />
-                      <h3 className="font-bold text-slate-900">Library</h3>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">Collections</p>
-                    </button>
+              {isSigningIn ? 'Authorizing...' : 'Authorize Google Drive'}
+            </button>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            {activeTab === 'home' && (
+              <motion.div 
+                key="home"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex-1 overflow-y-auto"
+              >
+                <div className="max-w-xl mx-auto px-6 py-12 space-y-12">
+                  <div className="space-y-4 text-center">
+                    <h2 className="text-5xl font-display text-slate-900 uppercase tracking-tight">Overview</h2>
                   </div>
 
-                  <div className="flex flex-col gap-3 mt-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <button 
-                      onClick={(e) => { e.stopPropagation(); handleShowAllMusic(undefined, false, false); }}
-                      className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-center"
+                      onClick={() => setActiveTab('browse')}
+                      className="group flex items-center gap-6 p-8 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50"
                     >
-                      <div className="flex items-center justify-center gap-4 text-slate-900">
-                        <Music size={24} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
-                        <span className="text-sm font-bold uppercase tracking-[0.2em]">Scan All Music</span>
+                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-slate-900 transition-colors">
+                        <FolderOpen size={28} />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <h3 className="text-xl font-bold text-slate-900">Cloud Drive</h3>
+                        <p className="text-xs text-slate-400 uppercase tracking-widest font-medium">Browse Files</p>
                       </div>
                     </button>
 
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleShowAllMusic(undefined, true, true); }}
-                      className="group p-6 bg-slate-900 rounded-3xl transition-all hover:bg-slate-800 text-center shadow-lg shadow-slate-200"
-                    >
-                      <div className="flex items-center justify-center gap-4 text-white">
-                        <Play size={20} className="fill-current" />
-                        <span className="text-sm font-bold uppercase tracking-[0.2em]">Shuffle Play All</span>
-                      </div>
-                    </button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => setActiveTab('vault')}
+                        className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-left"
+                      >
+                        <Heart size={24} className="text-slate-200 group-hover:text-red-500 transition-colors mb-4" />
+                        <h3 className="font-bold text-slate-900">Vault</h3>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">Liked Songs</p>
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('playlists')}
+                        className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-left"
+                      >
+                        <PlaySquare size={24} className="text-slate-200 group-hover:text-accent transition-colors mb-4" />
+                        <h3 className="font-bold text-slate-900">Library</h3>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">Collections</p>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleShowAllMusic(undefined, false, false); }}
+                        className="group p-6 bg-slate-50 border border-slate-100 rounded-3xl transition-all hover:bg-slate-100/50 text-center"
+                      >
+                        <div className="flex items-center justify-center gap-4 text-slate-900">
+                          <Music size={24} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+                          <span className="text-sm font-bold uppercase tracking-[0.2em]">Scan All Music</span>
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleShowAllMusic(undefined, true, true); }}
+                        className="group p-6 bg-slate-900 rounded-3xl transition-all hover:bg-slate-800 text-center shadow-lg shadow-slate-200"
+                      >
+                        <div className="flex items-center justify-center gap-4 text-white">
+                          <Play size={20} className="fill-current" />
+                          <span className="text-sm font-bold uppercase tracking-[0.2em]">Shuffle Play All</span>
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
           {activeTab === 'browse' && (
             <motion.div 
@@ -1015,6 +1043,7 @@ export default function App() {
             />
           )}
         </AnimatePresence>
+        )}
       </main>
 
       {/* New Playlist Modal */}

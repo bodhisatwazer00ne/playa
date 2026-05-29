@@ -35,11 +35,13 @@ async function startServer() {
   app.use(express.json({ limit: '10kb' })); // Reject JSON > 10kb
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-  // Apply general limiter to all /api routes
-  app.use('/api/', apiLimiter);
-
-  // Apply strict limiter to streaming (and any future auth routes)
-  app.use('/api/stream', sensitiveLimiter);
+  // Apply general limiter to non-streaming API routes to prevent rate-limiting browsers' standard Range/chunk requests
+  app.use('/api', (req, res, next) => {
+    if (req.path.startsWith('/stream')) {
+      return next(); // Exempt streaming from rate limit
+    }
+    apiLimiter(req, res, next);
+  });
 
   // API Proxy for Google Drive Streaming
   app.get('/api/stream/:fileId', async (req, res) => {
