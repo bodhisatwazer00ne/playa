@@ -183,8 +183,18 @@ export function MusicPlayer({
             currentSrc: audio.currentSrc
           });
         }}
-        onEnded={() => onNext(true)}
-        loop={repeatMode === 'one'}
+        onEnded={() => {
+          if (repeatMode === 'one') {
+            if (audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play().catch(err => {
+                if (err.name !== 'AbortError') console.error(err);
+              });
+            }
+          } else {
+            onNext(true);
+          }
+        }}
         crossOrigin="anonymous"
         preload="auto"
       />
