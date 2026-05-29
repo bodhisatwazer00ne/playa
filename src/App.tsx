@@ -268,46 +268,101 @@ export default function App() {
     setIsShowAllMode(true);
     setActiveTab('browse');
     try {
-      // Define a comprehensive list of standard audio/video MIME types since 'mimeType contains' is not supported by Drive API v3
-      const mediaMimes = [
-        "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/aac", "audio/flac", "audio/x-flac", "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/webm", "audio/3gpp",
-        "video/mp4", "video/webm", "video/quicktime", "video/x-matroska", "video/x-msvideo", "video/mpeg", "application/ogg", "application/x-ogg"
-      ];
-      const mimeTypeConditions = mediaMimes.map(type => `mimeType = '${type}'`).join(' or ');
-      
-      let q = `(${mimeTypeConditions}) and trashed = false`;
-      
-      // If specific folders are provided, restrict the search to those folders
-      if (folderIds && folderIds.length > 0) {
-        // Enforce the grouping with internal and external parentheses
-        const parentConditions = folderIds.map(id => `'${id}' in parents`).join(' or ');
-        q = `(${parentConditions}) and (${mimeTypeConditions}) and trashed = false`;
+      let rawFiles: any[] = [];
+      let nextPageToken: string | undefined = undefined;
+      let hasMore = true;
+      let pageCount = 0;
+
+      // Scan up to 10 pages (10,000 files/folders) recursively across the Drive
+      while (hasMore && pageCount < 10) {
+        const nameExtensions = [
+          "name contains '.mp3'", "name contains '.m4a'", "name contains '.wav'", "name contains '.flac'", 
+          "name contains '.ogg'", "name contains '.aac'", "name contains '.mp4'", "name contains '.webm'",
+          "name contains '.mov'", "name contains '.mkv'", "name contains '.avi'"
+        ];
+        const extensionConditions = nameExtensions.join(' or ');
+        
+        const q = `(mimeType contains 'audio/' or mimeType contains 'video/' or mimeType = 'application/ogg' or mimeType = 'application/vnd.google-apps.folder' or ${extensionConditions}) and trashed = false`;
+        
+        let url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink,webContentLink,parents),nextPageToken&pageSize=1000`;
+        if (nextPageToken) {
+          url += `&pageToken=${nextPageToken}`;
+        }
+
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+        
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          throw new Error(`[status: ${res.status}] ${error.error?.message || 'Scan failed'}`);
+        }
+        
+        const data = await res.json();
+        if (data.files) {
+          rawFiles = rawFiles.concat(data.files);
+        }
+        nextPageToken = data.nextPageToken;
+        hasMore = !!nextPageToken;
+        pageCount++;
       }
 
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink,webContentLink)&pageSize=1000`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+      // Check if we are scanning the entire Drive
+      const isScanningEntireDrive = !folderIds || folderIds.length === 0 || folderIds.includes('root');
       
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        throw new Error(`[status: ${res.status}] ${error.error?.message || 'Scan failed'}`);
-      }
-      
-      const data = await res.json();
-      
-      // Strict client-side filter for media MIME types and valid extensions and de-duplicate by ID
-      const rawFiles = data.files || [];
       const mediaFiles: DriveFile[] = [];
       const seenIds = new Set();
 
-      for (const f of rawFiles) {
-        const isMedia = f.mimeType.startsWith('audio/') || 
-                       f.mimeType.startsWith('video/') ||
-                       f.mimeType === 'application/ogg' ||
-                       /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(f.name);
-         
-        if (isMedia && !seenIds.has(f.id)) {
-          seenIds.add(f.id);
-          mediaFiles.push(f);
+      if (isScanningEntireDrive) {
+        for (const child of rawFiles) {
+          const isMedia = child.mimeType?.startsWith('audio/') || 
+                         child.mimeType?.startsWith('video/') ||
+                         child.mimeType === 'application/ogg' ||
+                         /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(child.name);
+           
+          if (isMedia && !seenIds.has(child.id)) {
+            seenIds.add(child.id);
+            mediaFiles.push(child);
+          }
+        }
+      } else {
+        // Build child adjacency map of folders/files to enable recursive depth-first-search
+        const parentMap = new Map<string, any[]>();
+        for (const file of rawFiles) {
+          if (file.parents && file.parents.length > 0) {
+            for (const parentId of file.parents) {
+              if (!parentMap.has(parentId)) {
+                parentMap.set(parentId, []);
+              }
+              parentMap.get(parentId)!.push(file);
+            }
+          }
+        }
+
+        const visitedFolders = new Set<string>();
+        
+        const collectAllMedia = (fId: string) => {
+          if (visitedFolders.has(fId)) return;
+          visitedFolders.add(fId);
+
+          const children = parentMap.get(fId) || [];
+          for (const child of children) {
+            const isFolder = child.mimeType === 'application/vnd.google-apps.folder';
+            const isMedia = child.mimeType?.startsWith('audio/') || 
+                           child.mimeType?.startsWith('video/') ||
+                           child.mimeType === 'application/ogg' ||
+                           /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(child.name);
+
+            if (isMedia && !seenIds.has(child.id)) {
+              seenIds.add(child.id);
+              mediaFiles.push(child);
+            }
+            if (isFolder) {
+              collectAllMedia(child.id);
+            }
+          }
+        };
+
+        for (const fId of folderIds) {
+          collectAllMedia(fId);
         }
       }
       
