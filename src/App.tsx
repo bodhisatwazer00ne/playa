@@ -48,6 +48,12 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  const handleExpiredToken = () => {
+    setAccessToken(null);
+    localStorage.removeItem('google_access_token');
+  };
+
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -165,6 +171,12 @@ export default function App() {
       const q = `name contains '${searchQuery.replace(/'/g, "\\'")}' and trashed = false and (mimeType contains 'audio/' or mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder')`;
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink)&pageSize=50`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+      
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(`[status: ${res.status}] ${error.error?.message || 'Search failed'}`);
+      }
+      
       const data = await res.json();
       
       const driveFiles = data.files || [];
@@ -176,8 +188,12 @@ export default function App() {
         folders,
         playlists: filteredPlaylists
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Search error:', e);
+      if (e?.message?.includes('status: 401') || String(e).includes('401')) {
+        handleExpiredToken();
+        alert('Your Google permissions session has expired. Please authorize again.');
+      }
     } finally {
       setIsSearching(false);
     }
@@ -260,12 +276,13 @@ export default function App() {
 
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,thumbnailLink,webContentLink)&pageSize=1000`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const data = await res.json();
       
-      if (data.error) {
-        console.error('Drive API Error:', data.error);
-        throw new Error(data.error.message);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(`[status: ${res.status}] ${error.error?.message || 'Scan failed'}`);
       }
+      
+      const data = await res.json();
       
       // Strict client-side filter for media MIME types and valid extensions and de-duplicate by ID
       const rawFiles = data.files || [];
@@ -276,7 +293,7 @@ export default function App() {
         const isMedia = f.mimeType.startsWith('audio/') || 
                        f.mimeType.startsWith('video/') ||
                        /\.(mp3|m4a|wav|flac|ogg|aac|mp4|webm|mov|mkv|avi)$/i.test(f.name);
-        
+         
         if (isMedia && !seenIds.has(f.id)) {
           seenIds.add(f.id);
           mediaFiles.push(f);
@@ -306,9 +323,14 @@ export default function App() {
           setIsPlayerExpanded(true);
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Scan failed:', e);
-      alert('Failed to scan media. Please try again.');
+      if (e?.message?.includes('status: 401') || String(e).includes('401')) {
+        handleExpiredToken();
+        alert('Your Google permissions session has expired. Please authorize again.');
+      } else {
+        alert('Failed to scan media. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -326,8 +348,11 @@ export default function App() {
     try {
       const data = await listFiles(token, folderId);
       setFiles(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Fetch error:', error);
+      if (error?.message?.includes('status: 401') || String(error).includes('401')) {
+        handleExpiredToken();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -500,8 +525,12 @@ export default function App() {
         }));
         setIsPlayerExpanded(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Play playlist error:', error);
+      if (error?.message?.includes('status: 401') || String(error).includes('401')) {
+        handleExpiredToken();
+        alert('Your Google permissions session has expired. Please authorize again.');
+      }
     } finally {
       setIsLoading(false);
     }

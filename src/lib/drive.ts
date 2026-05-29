@@ -11,8 +11,8 @@ export async function listFiles(accessToken: string, folderId: string = 'root'):
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'Failed to list files');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(`[status: ${response.status}] ${error.error?.message || 'Failed to list files'}`);
   }
 
   const data = await response.json();
@@ -27,8 +27,8 @@ export async function getFileMetadata(accessToken: string, fileId: string): Prom
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'Failed to get file metadata');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(`[status: ${response.status}] ${error.error?.message || 'Failed to get file metadata'}`);
   }
 
   return response.json();
