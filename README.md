@@ -94,10 +94,6 @@ Contributions are welcome! Feel free to open issues or submit pull requests to h
 
 ---
 
-##  License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
 
 *Enjoy your music, anywhere.*
