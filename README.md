@@ -1,4 +1,4 @@
-# Playa - Your Music, Anywhere! 🎧
+# Playa - Your Music, Anywhere! 
 
 Playa is a high-performance, cloud-native music and video player that turns your Google Drive into a powerful personal streaming service. Built with a focus on speed, style, and seamless integration, Playa ensures your media library is always just a click away.
 
